@@ -5,19 +5,22 @@
 install.packages("rpart")
 install.packages("C50")
 install.packages("tree")
+install.packages("dbplyr")
 
 # Activate packages
 library(rpart)
 library(C50)
 library(tree)
+library(dplyr)
 
-setwd('..')
+setwd('.')
 
 #---------------------------------------------------#
 # LOADING DATA                                      #
 #---------------------------------------------------#
 
-donnees <- read.csv("./datas/Data Projet.csv", header = T, sep = ",", dec = "..")
+donnees <- read.csv("./datas/Data Projet.csv", header = T, sep = ",", dec = ".")
+donneesNew <- read.csv("./datas/Data Projet New.csv", header = T, sep = ",", dec = ".")
 
 str(donnees)
 
@@ -63,34 +66,66 @@ print(taux_succes_tree) # 2e meilleur taux succes
 mc_tree1 <- table(donnes_ET$default, test_tree1)
 print(mc_tree1)
 # Rappel
-mc_tree1[1,1]/(mc_tree1[1,1]+mc_tree1[1,2])
+print("RPART")
+cat("Rappel", mc_tree1[1,1]/(mc_tree1[1,1]+mc_tree1[1,2]), "\n")
 # Spécificité
-mc_tree1[2,2]/(mc_tree1[2,1]+mc_tree1[2,2])
+cat("Spécificité", mc_tree1[2,2]/(mc_tree1[2,1]+mc_tree1[2,2]), "\n")
 # Précision
-mc_tree1[1,1]/(mc_tree1[1,1]+mc_tree1[2,1])
+cat("Précision", mc_tree1[1,1]/(mc_tree1[1,1]+mc_tree1[2,1]), "\n")
 # Taux de Vrais Négatifs
-mc_tree1[2,2]/(mc_tree1[1,1]+mc_tree1[1,2])
+cat("Taux de Vrais Négatifs", mc_tree1[2,2]/(mc_tree1[1,1]+mc_tree1[1,2]), "\n")
 
 # Matrice de confusion pour 'tree2'
 mc_tree2 <- table(donnes_ET$default, test_tree2)
 print(mc_tree2)
+print("C5.0")
 # Rappel
-mc_tree2[1,1]/(mc_tree2[1,1]+mc_tree2[1,2])
+cat("Rappel", mc_tree2[1,1]/(mc_tree2[1,1]+mc_tree2[1,2]), "\n")
 # Spécificité
-mc_tree2[2,2]/(mc_tree2[2,1]+mc_tree2[2,2])
+cat("Spécificité", mc_tree2[2,2]/(mc_tree2[2,1]+mc_tree2[2,2]), "\n")
 # Précision
-mc_tree2[1,1]/(mc_tree2[1,1]+mc_tree2[2,1])
+cat("Précision", mc_tree2[1,1]/(mc_tree2[1,1]+mc_tree2[2,1]), "\n")
 # Taux de Vrais Négatifs
-mc_tree2[2,2]/(mc_tree2[1,1]+mc_tree2[1,2])
+cat("Taux de Vrais Négatifs", mc_tree2[2,2]/(mc_tree2[1,1]+mc_tree2[1,2]), "\n")
 
 # Matrice de confusion pour 'tree3'
 mc_tree3 <- table(donnes_ET$default, test_tree3)
 print(mc_tree3)
+print("TREE")
 # Rappel
-mc_tree3[1,1]/(mc_tree3[1,1]+mc_tree3[1,2])
+cat("Rappel", mc_tree3[1,1]/(mc_tree3[1,1]+mc_tree3[1,2]), "\n")
 # Spécificité
-mc_tree3[2,2]/(mc_tree3[2,1]+mc_tree3[2,2])
+cat("Spécificité", mc_tree3[2,2]/(mc_tree3[2,1]+mc_tree3[2,2]), "\n")
 # Précision
-mc_tree3[1,1]/(mc_tree3[1,1]+mc_tree3[2,1])
+cat("Précision", mc_tree3[1,1]/(mc_tree3[1,1]+mc_tree3[2,1]), "\n")
 # Taux de Vrais Négatifs
-mc_tree3[2,2]/(mc_tree3[1,1]+mc_tree3[1,2])
+cat("Taux de Vrais Négatifs", mc_tree3[2,2]/(mc_tree3[1,1]+mc_tree3[1,2]), "\n")
+
+#------------------------------------------------------#
+# APPLICATION DU CLASSIFIEUR SUR LES DONNÉES À PRÉDIRE #
+#------------------------------------------------------#
+
+donnees_APP <- subset(donnees, select = -customer)
+
+tree_APP <- rpart(default ~ ., donnees_APP)
+
+# Application de tree_APP sur l'ensemble de donneesNew
+predict_APP <- predict(tree_APP, donneesNew, type="class")
+# Application de tree_APP sur l'ensemble de donneesNew pour obtenir les proba
+prob_APP <- predict(tree_APP, donneesNew, type="prob")
+
+# Obtention de la proba de la classe prédite
+prob_APP_FRAME <- as.data.frame(prob_APP)
+predict_PROB <- pmax(prob_APP_FRAME$Oui, prob_APP_FRAME$Non)
+
+# Ajout des resultats dans une colonne
+donneesNew$default <- predict_APP
+
+# Ajout des probabilités dans une colonne
+donneesNew$prob <- predict_PROB
+
+extract <- donneesNew %>% select(customer, default, prob)
+
+summary(subset(extract, select = -customer))
+
+write.table(extract, file='resultats.csv', sep=",", dec=".", row.names = F)
