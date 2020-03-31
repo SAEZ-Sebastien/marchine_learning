@@ -6,12 +6,15 @@ install.packages("rpart")
 install.packages("C50")
 install.packages("tree")
 install.packages("dbplyr")
+install.packages ("rlang")
+install.packages("ggplot2")
 
 # Activate packages
 library(rpart)
 library(C50)
 library(tree)
 library(dplyr)
+library(ggplot2)
 
 setwd('.')
 
@@ -22,7 +25,27 @@ setwd('.')
 donnees <- read.csv("./datas/Data Projet.csv", header = T, sep = ",", dec = ".")
 donneesNew <- read.csv("./datas/Data Projet New.csv", header = T, sep = ",", dec = ".")
 
+# Exploration des datas
 str(donnees)
+View(donnees)
+summary(donnees)
+
+pie(table(donnees$age), main = "Répartition des ages")
+pie(table(donnees$ed), main = "Répartition des etudes")
+pie(table(donnees$default), main = "Répartition des défault")
+
+# Nuage de points 
+qplot(age, creddebt, data=donnees, main="Nuage de point des credits/debits
+et Age", xlab="Age", ylab="Valeur de credits/debits", color=default)
+
+qplot(age, income, data=donnees, main="Nuage de point des credits/debits
+et Age", xlab="Age", ylab="Revenus", color=default)
+
+qplot(ed, creddebt, data=donnees, main="Nuage de point des credits/debits
+et Etude", xlab="Etudes", ylab="Valeur de credits/debits", color=default)
+
+qplot(ed, income, data=donnees, main="Nuage de point des credits/debits
+et Edtude", xlab="Etudes", ylab="Revenus", color=default)
 
 donnees_EA <- donnees[1:800,]
 
